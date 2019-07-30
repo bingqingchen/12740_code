@@ -11,9 +11,9 @@ GPIO.setup(red_led, GPIO.OUT)
 
 while True:
     if GPIO.input(button):
-        GPIO.output(red_led, GPIO.HIGH)
-    else:
         GPIO.output(red_led, GPIO.LOW)
+    else:
+        GPIO.output(red_led, GPIO.HIGH)
 
 
 
