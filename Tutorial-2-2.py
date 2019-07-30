@@ -10,13 +10,6 @@ button = 25
 GPIO.setup(button, GPIO.IN)
 GPIO.setup(red_led, GPIO.OUT)
 
-<<<<<<< HEAD
-while True:
-    if GPIO.input(button):
-        GPIO.output(red_led, GPIO.LOW)
-    else:
-        GPIO.output(red_led, GPIO.HIGH)
-
 def main():
     while True:
         if GPIO.input(button):
