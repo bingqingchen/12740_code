@@ -13,9 +13,9 @@ GPIO.setup(red_led, GPIO.OUT)
 def main():
     while True:
         if GPIO.input(button):
-            GPIO.output(red_led, GPIO.HIGH)
-        else:
             GPIO.output(red_led, GPIO.LOW)
+        else:
+            GPIO.output(red_led, GPIO.HIGH)
 
 if __name__ == '__main__':
     try:
