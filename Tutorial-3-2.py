@@ -1,3 +1,4 @@
+import sys
 import busio
 import digitalio
 import board
@@ -26,7 +27,7 @@ def main():
         if channel.voltage>=threshold:
             GPIO.output(red_led, GPIO.HIGH)
         else:
-            GPIO.output(red_led, GPIO.HIGH)
+            GPIO.output(red_led, GPIO.LOW)
         time.sleep(1)
 
 if __name__ == '__main__':
