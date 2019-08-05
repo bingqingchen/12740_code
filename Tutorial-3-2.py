@@ -15,7 +15,7 @@ mcp = MCP.MCP3008(spi, cs)
 # Create an analog input channel on the MCP3008 pin 0
 channel = AnalogIn(mcp, MCP.P0)
 
-# Set up GPIO
+# Set up GPIO for LED
 GPIO.setmode(GPIO.BCM)
 red_led = 18
 GPIO.setup(red_led, GPIO.OUT)

@@ -1,21 +1,21 @@
 #!/usr/bin/python
-import paho.mqtt.client as mqtt
 import sys
-#import busio
-#import digitalio
-#import board
-#import adafruit_mcp3xxx.mcp3008 as MCP
-#from adafruit_mcp3xxx.analog_in import AnalogIn
+import busio
+import digitalio
+import board
+import adafruit_mcp3xxx.mcp3008 as MCP
+from adafruit_mcp3xxx.analog_in import AnalogIn
 import time
-#import RPi.GPIO as GPIO
-import numpy as np
+import RPi.GPIO as GPIO
+
+import paho.mqtt.client as mqtt
 
 class Device(mqtt.Client):
     def __init__(self, username, password):
         super(Device, self).__init__()
         self.host = "mqtt.openchirp.io"
         self.port = 8883
-        self.keepalive = 6000
+        self.keepalive = 300
         self.username = username
         self.password = password
         
@@ -46,31 +46,52 @@ class Device(mqtt.Client):
         self.device_state[transducer] = msg.payload.decode()
 
     def on_publish(self, client, userdata, result):
-        print("data published")
+        print("Data published")
+
+# Modify here based on your own device
+username = '5d488468466cc60c381e0b5e' # Use Device ID as Username
+password = 'D1vmt0VIWDiVfTvoxn7rnGBMrgCZEO7a' # Use Token as Password
+
+# Instantiate your own device
+smart_light = Device(username, password)
+
+spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
+cs = digitalio.DigitalInOut(board.D5)
+
+# Create an MCP3008 object
+mcp = MCP.MCP3008(spi, cs)
+# Create an analog input channel on the MCP3008 pin 0
+channel = AnalogIn(mcp, MCP.P0)
+
+# Set up GPIO for LED
+GPIO.setmode(GPIO.BCM)
+red_led = 18
+GPIO.setup(red_led, GPIO.OUT)
 
 def main():
-    # Modify here based on your own device
-    username = '5d488468466cc60c381e0b5e' # Use Device ID as Username
-    password = 'D1vmt0VIWDiVfTvoxn7rnGBMrgCZEO7a' # Use Token as Password
+    threshold = 2 # Threshold for turn on/off LED
+    sensor = "light-dependent_resistor"
+    actuator = "light"
     
-    # Instantiate your own device
-    smart_light = Device(username, password)#, sensorList, actuatorList)
+    # Initialize
+    smart_light.device_state[sensor] = 0
+    smart_light.device_state[actuator] = 0
     
     while True:
-        sensor_reading = np.random.rand()
+        GPIO.output(red_led, smart_light.device_state[actuator])
+        
+        # Read from sensor
+        sensor_reading = channel.voltage
         print(sensor_reading)
-        time.sleep(1)
-        smart_light.publish("openchirp/device/"+username+"/light-dependent_resistor", payload=sensor_reading, qos=0, retain=True)
-        smart_light
-    '''
-    threshold = 2
-    while True:
-        sensor_reading = smart_light.subscribe
-        if sensor_reading > threshold:
-            smart_light.publish() # Turn Light On
+        smart_light.publish("openchirp/device/"+username+"/"+sensor, payload=sensor_reading, qos=0, retain=True)
+        # Update device state
+        smart_light.device_state[sensor] = sensor_reading
+        if smart_light.device_state[sensor] > threshold:
+            smart_light.device_state[actuator] = 1
         else:
-            smart_light.publish() # Turn Light Off
-    '''
+            smart_light.device_state[actuator] = 0
+        time.sleep(1)
+
 if __name__ == '__main__':
     try:
         main()
