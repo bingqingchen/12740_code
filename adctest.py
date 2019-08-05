@@ -28,4 +28,4 @@ while True:
     output = np.interp(output, [0, 1023], [0, 100])
     print(output)
         #pwm.ChangeDutyCycle(output)
-    sleep(0.1)
+    time.sleep(0.1)
