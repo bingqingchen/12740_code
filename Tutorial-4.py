@@ -1,60 +1,67 @@
 #!/usr/bin/python
 import paho.mqtt.client as mqtt
 import sys
-import busio
-import digitalio
-import board
-import adafruit_mcp3xxx.mcp3008 as MCP
-from adafruit_mcp3xxx.analog_in import AnalogIn
+#import busio
+#import digitalio
+#import board
+#import adafruit_mcp3xxx.mcp3008 as MCP
+#from adafruit_mcp3xxx.analog_in import AnalogIn
 import time
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
+import numpy as np
 
 class Device(mqtt.Client):
-    def __init__(self, username, password, sensorList, actuatorList):
+    def __init__(self, username, password):
         super(Device, self).__init__()
         self.host = "mqtt.openchirp.io"
         self.port = 8883
-        self.keepalive = 60
+        self.keepalive = 6000
         self.username = username
         self.password = password
         
-        self.sensor = sensorList
-        self.actuators = actuatorList
-        self.transduces = sensorList + actuatorList
-
         # Set access credential
-        self.username_pw_set(username,password) #set username and pass
-        # self.tls_set(ca_certs = '/etc/ssl/certs')
+        self.username_pw_set(username, password) #set username and pass
+        self.tls_set('cacert.pem')
+        
+        # Create a dictionary to save all transducer states
+        self.device_state = dict()
         
         # Connect to the Broker, i.e. the OpenChirp server
         self.connect(self.host, self.port, self.keepalive)
-        self.loop_forever()
+        self.loop_start()
     
-    # Subscribing in on_connect() means that if we lose the connection and
-        # reconnect then subscriptions will be renewed.
     def on_connect(self, client, userdata, flags, rc):
-        print("I am here")
-        for transducer in self.transducers:
-            self.subscribe("openchirp/device/"+self.username+"/"+ transducer)
-            print(transducer)
+        if rc == 0:
+            print("Connection Successful")
+        else:
+            print("Connection Unsucessful, rc code = {}".format(rc))
+        # Subscribing in on_connect() means that if we lose the connection and reconnect then subscriptions will be renewed.
+        self.subscribe("openchirp/device/"+self.username+"/#") # Subscribe to all tranducers
 
     # The callback for when a PUBLISH message is received from the server.
     def on_message(self, client, userdata, msg):
-        print('\n' + msg.topic+" "+str(msg.payload.decode()))
-        #self.message = msg.payload.decode()
+        print(msg.topic+" "+str(msg.payload.decode()))
+        # Save device state
+        transducer = msg.topic.split("/")[-1]
+        self.device_state[transducer] = msg.payload.decode()
 
     def on_publish(self, client, userdata, result):
         print("data published")
 
 def main():
     # Modify here based on your own device
-    username = '5d488468466cc60c381e0b5e' # Device ID
-    password = 'D1vmt0VIWDiVfTvoxn7rnGBMrgCZEO7a' # Token
-    sensorList = ['light-dependent_resistor']
-    actuatorList = ['light']
+    username = '5d488468466cc60c381e0b5e' # Use Device ID as Username
+    password = 'D1vmt0VIWDiVfTvoxn7rnGBMrgCZEO7a' # Use Token as Password
     
     # Instantiate your own device
-    smart_light = Device(username, password, sensorList, actuatorList)
+    smart_light = Device(username, password)#, sensorList, actuatorList)
+    
+    while True:
+        sensor_reading = np.random.rand()
+        print(sensor_reading)
+        time.sleep(1)
+        smart_light.publish("openchirp/device/"+username+"/light-dependent_resistor", payload=sensor_reading, qos=0, retain=True)
+        smart_light
     '''
     threshold = 2
     while True:
