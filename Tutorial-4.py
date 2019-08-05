@@ -78,7 +78,7 @@ def main():
     smart_light.device_state[actuator] = 0
     
     while True:
-        GPIO.output(red_led, smart_light.device_state[actuator])
+        GPIO.output(red_led, int(smart_light.device_state[actuator]))
         
         # Read from sensor
         sensor_reading = channel.voltage
