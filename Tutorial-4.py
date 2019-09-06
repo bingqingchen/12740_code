@@ -69,7 +69,7 @@ red_led = 18
 GPIO.setup(red_led, GPIO.OUT)
 
 def main():
-    threshold = 2 # Threshold for turn on/off LED
+    # threshold = 2 # Threshold for turn on/off LED
     sensor = "light-dependent_resistor"
     actuator = "light"
     
@@ -84,12 +84,15 @@ def main():
         sensor_reading = channel.voltage
         print(sensor_reading)
         smart_light.publish("openchirp/device/"+username+"/"+sensor, payload=sensor_reading, qos=0, retain=True)
-        # Update device state
+        # Save readings
         smart_light.device_state[sensor] = sensor_reading
-        if smart_light.device_state[sensor] > threshold:
-            smart_light.device_state[actuator] = 1
+        
+        # Actuate the light based on the command
+        if smart_light.device_state[actuator]:
+            GPIO.output(red_led, GPIO.HIGH)
         else:
-            smart_light.device_state[actuator] = 0
+            GPIO.output(red_led, GPIO.LOW)
+        
         time.sleep(1)
 
 if __name__ == '__main__':
